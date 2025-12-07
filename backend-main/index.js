@@ -71,7 +71,17 @@ function startServer() {
   const port = process.env.PORT || 3000;
 
   app.use(bodyParser.json());
-  app.use(express.json());
+  app.use(express.json({
+  verify: (req, res, buf) => { req.rawBody = buf.toString("utf8"); }
+}));
+app.use((err, req, res, next) => {
+  if (err && err.type === "entity.parse.failed") {
+    console.error("Raw request body:\n", req.rawBody);
+    return res.status(400).json({ error: "Invalid JSON", message: err.message });
+  }
+  next(err);
+});
+
 
   const mongoURI = process.env.MONGODB_URI;
 
